@@ -1,7 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using WebApi.Data;
 using WebApi.DBOperations;
+using FluentValidation;
 
 namespace WebApi.BookOperations
 {
@@ -10,22 +12,22 @@ namespace WebApi.BookOperations
 	{
 		public CreateBookModel Model { get; set; }
 		private readonly BookStoreDbContext _dbContext;
-		public CreateBookCommand(BookStoreDbContext dbContext)
+		private readonly IMapper _mapper;
+		public CreateBookCommand(BookStoreDbContext dbContext, IMapper mapper)
 		{
 			_dbContext = dbContext;
+			_mapper = mapper;
 		}
 		public void Handle()
 		{
 			var book = _dbContext.Books.SingleOrDefault(x => x.Title == Model.Title);
+
 			if (book is not null)
 			{
 				throw new InvalidOperationException("Book is already in database");
 			}
-			book = new Book();
-			book.Title = Model.Title;
-			book.PublishDate = Model.PublishDate;
-			book.PageCount = Model.PageCount;
-			book.GenreId = Model.GenreID;
+
+			book = _mapper.Map<Book>(Model);
 
 			_dbContext.Books.Add(book);
 			_dbContext.SaveChanges();
